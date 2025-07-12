@@ -1,5 +1,5 @@
+import React from 'react';
 import type { ChangeEvent } from 'react';
-
 
 interface Props {
   onSearch: (term: string) => void;
@@ -29,9 +29,9 @@ class SearchBar extends React.Component<Props, State> {
     return (
       <div>
         <input value={this.state.input} onChange={this.handleChange} />
-    <button onClick={this.handleSubmit}>Search</button>
+        <button onClick={this.handleSubmit}>Search</button>
       </div>
-  );
+    );
   }
 }
 
