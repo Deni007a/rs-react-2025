@@ -36,9 +36,10 @@ class App extends React.Component<Record<string, never>, State> {
     try {
       const data = await fetchSwapiPeople(term);
       this.setState({ items: data.results, loading: false });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
       this.setState({
-        error: err.message || 'Ошибка загрузки',
+        error: message,
         loading: false,
       });
     }
