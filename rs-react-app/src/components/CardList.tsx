@@ -10,7 +10,7 @@ class CardList extends React.Component<Props> {
   render() {
     return (
       <div>
-        <p>КАРД ЛИСТ НИЖНЯЯ ПАНЕЛЬ</p>
+        <p>НИЖНЯЯ ПАНЕЛЬ</p>
         {this.props.items.map((person) => (
           <Card key={person.url} person={person} />
         ))}

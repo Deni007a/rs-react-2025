@@ -22,13 +22,17 @@ class SearchBar extends React.Component<Props, State> {
 
   handleSubmit = () => {
     const term = this.state.input.trim();
-    if (term) this.props.onSearch(term);
+    this.props.onSearch(term);
   };
 
   render() {
     return (
       <div>
-        <input value={this.state.input} onChange={this.handleChange} />
+        <input
+          value={this.state.input}
+          onChange={this.handleChange}
+          placeholder="Введите имя персонажа"
+        />
         <button onClick={this.handleSubmit}>Search</button>
       </div>
     );
