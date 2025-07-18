@@ -1,4 +1,4 @@
-import { fetchSwapiPeople } from './api';
+import { fetchSwapiPeople } from '../utils/api';
 
 describe('fetchSwapiPeople', () => {
   beforeEach(() => {

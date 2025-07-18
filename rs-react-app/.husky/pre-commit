@@ -9,4 +9,5 @@ npm run format
 # Проверка кода линтером
 npm run lint
 
-
+# Запуск тестов
+npm test

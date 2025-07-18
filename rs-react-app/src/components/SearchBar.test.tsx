@@ -46,4 +46,20 @@ describe('SearchBar', () => {
     //  Проверяем начальное значение
     expect(input).toHaveValue('Yoda');
   });
+  test('uses value from localStorage', () => {
+    // Устанавливаем значение в localStorage
+    localStorage.setItem('searchTerm', 'Obi-Wan');
+
+    // Рендерим компонент, передавая значение из localStorage
+    render(
+      <SearchBar
+        onSearch={() => {}}
+        initialValue={localStorage.getItem('searchTerm') || ''}
+      />
+    );
+
+    // Проверяем, что поле ввода содержит значение из localStorage
+    const input = screen.getByPlaceholderText(/введите имя персонажа/i);
+    expect(input).toHaveValue('Obi-Wan');
+  });
 });
