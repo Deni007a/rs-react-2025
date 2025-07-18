@@ -1,7 +1,39 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "compilerOptions": {
+    //  Указываем, что используем модули ECMAScript
+    "module": "ESNext",
+
+    //  Целевая платформа: современные браузеры и Node
+    "target": "ESNext",
+
+    //  Генерировать файлы типов, если нужно для библиотеки
+    "declaration": true,
+
+    //  Поддержка JSX (обязательно для React-компонентов)
+    "jsx": "react-jsx",
+
+    //  Совместимость с импортами из CommonJS
+    "esModuleInterop": true,
+
+    //  Разрешает использовать `import React from 'react'`, даже если React — default
+    "allowSyntheticDefaultImports": true,
+
+    //  Резолвинг модулей
+    "moduleResolution": "Node",
+
+    //  Показывать все ошибки при импорте
+    "forceConsistentCasingInFileNames": true,
+
+    //  Проверка типов во всех файлах
+    "strict": true,
+
+    //  Поддержка ES-модулей, включая `.js` и `.mjs`
+    "resolveJsonModule": true,
+
+    //  Убираем лишние лишние лишние папки из сборки
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "build"]
 }
+
