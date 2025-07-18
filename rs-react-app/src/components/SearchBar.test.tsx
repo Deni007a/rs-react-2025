@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import SearchBar from './SearchBar';
 
 describe('SearchBar', () => {
@@ -42,7 +43,7 @@ describe('SearchBar', () => {
     render(<SearchBar onSearch={() => {}} initialValue="Yoda" />);
     const input = screen.getByPlaceholderText(/введите имя персонажа/i);
 
-    // 📌 Проверяем начальное значение
+    //  Проверяем начальное значение
     expect(input).toHaveValue('Yoda');
   });
 });
