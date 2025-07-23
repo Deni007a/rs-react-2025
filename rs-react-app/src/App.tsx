@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocalStorage } from './hooks/useLocalStorage'; // новый хук
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
 import Loader from './components/Loader';
@@ -12,28 +13,25 @@ const App = () => {
   //  Состояние списка результатов
   const [items, setItems] = useState<SwapiPerson[]>([]);
 
-  // Получаем сохранённый поисковый запрос из localStorage при первой загрузке
-  const [searchTerm, setSearchTerm] = useState(
-    () => localStorage.getItem('searchTerm') || ''
-  );
+  //  Используем хук для работы с localStorage
+  const [searchTerm, setSearchTerm] = useLocalStorage('searchTerm', '');
 
   // Флаг загрузки для отображения <Loader />
   const [loading, setLoading] = useState(false);
 
-  //  Храним текст ошибки (если запрос упал)
+  // Храним текст ошибки (если запрос упал)
   const [error, setError] = useState('');
 
-  //  Флаг для отображения компонента, вызывающего ошибку
+  // Флаг для отображения компонента, вызывающего ошибку
   const [showBug, setShowBug] = useState(false);
 
-  // Автоматически запускаем загрузку данных при монтировании
+  // Загрузка данных при монтировании
   useEffect(() => {
     fetchData(searchTerm);
   }, []);
 
   /**
    * Асинхронная загрузка данных по имени персонажа
-   * @param term - поисковый запрос
    */
   const fetchData = async (term: string) => {
     setLoading(true);
@@ -47,22 +45,20 @@ const App = () => {
       const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
       setError(message); // сохраняем текст ошибки
     } finally {
-      setLoading(false); // выключаем индикатор загрузки
+      setLoading(false);
     }
   };
 
   /**
-   *  Обработчик поискового запроса — сохраняем в localStorage и запускаем fetch
-   * @param term - строка поиска
+   * Обработчик поискового запроса
    */
   const handleSearch = (term: string) => {
-    localStorage.setItem('searchTerm', term); // сохраняем запрос
-    setSearchTerm(term);
+    setSearchTerm(term); //  сохраняется в localStorage через хук
     fetchData(term);
   };
 
   /**
-   *  Активируем отображение компонента, который бросает ошибку
+   * Активация компонента, вызывающего ошибку
    */
   const triggerBug = () => {
     setShowBug(true);
@@ -89,24 +85,24 @@ const App = () => {
         <h1>SWAPI Поиск</h1>
 
         <header className="search-section">
-          {/*  Компонент ввода поискового запроса */}
+          {/* Компонент ввода поискового запроса */}
           <SearchBar onSearch={handleSearch} initialValue={searchTerm} />
         </header>
 
         <main className="results-section">
-          {/*  Показываем лоадер во время загрузки */}
+          {/* Показываем лоадер во время загрузки */}
           {loading && <Loader />}
 
-          {/*  Показываем текст ошибки */}
+          {/* Показываем текст ошибки */}
           {error && <div style={{ color: 'red' }}>{error}</div>}
 
-          {/*  Показываем список карточек, если всё успешно */}
+          {/* Список карточек, если всё успешно */}
           {!loading && !error && <CardList items={items} />}
 
-          {/*  Кнопка для вызова компонента с ошибкой */}
+          {/* Кнопка для вызова компонента с ошибкой */}
           <button onClick={triggerBug}>Render BuggyComponent</button>
 
-          {/*  Потенциально сбойный компонент */}
+          {/* Потенциально сбойный компонент */}
           {showBug && <BuggyComponent />}
         </main>
       </div>
