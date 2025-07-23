@@ -7,7 +7,13 @@ import { useState } from 'react';
  */
 export function useLocalStorage(key: string, initialValue: string) {
   const [value, setValue] = useState(() => {
-    return localStorage.getItem(key) || initialValue;
+    // Пытаемся получить значение из localStorage
+    try {
+      return localStorage.getItem(key) || initialValue;
+    } catch {
+      // Если localStorage не доступен, возвращаем значение по умолчанию для браузеров в приватном режиме
+      return initialValue;
+    }
   });
 
   const updateValue = (newValue: string) => {
