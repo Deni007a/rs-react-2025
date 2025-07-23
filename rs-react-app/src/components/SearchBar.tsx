@@ -1,42 +1,33 @@
+import { useState } from 'react';
 import React from 'react';
-import type { ChangeEvent } from 'react';
 
 interface Props {
   onSearch: (term: string) => void;
   initialValue?: string;
 }
 
-interface State {
-  input: string;
-}
+function SearchBar({ onSearch, initialValue = '' }: Props) {
+  const [input, setInput] = useState(initialValue);
 
-class SearchBar extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { input: props.initialValue ?? '' };
-  }
-
-  handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ input: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
   };
 
-  handleSubmit = () => {
-    const term = this.state.input.trim();
-    this.props.onSearch(term);
+  const handleSubmit = () => {
+    const term = input.trim();
+    onSearch(term);
   };
 
-  render() {
-    return (
-      <div>
-        <input
-          value={this.state.input}
-          onChange={this.handleChange}
-          placeholder="Введите имя персонажа"
-        />
-        <button onClick={this.handleSubmit}>Search</button>
-      </div>
-    );
-  }
+  return (
+    <div>
+      <input
+        value={input}
+        onChange={handleChange}
+        placeholder="Введите имя персонажа"
+      />
+      <button onClick={handleSubmit}>Search</button>
+    </div>
+  );
 }
 
 export default SearchBar;

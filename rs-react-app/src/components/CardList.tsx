@@ -1,4 +1,3 @@
-import React from 'react';
 import Card from './Card';
 import type { SwapiPerson } from '../types/swapi';
 
@@ -6,17 +5,15 @@ interface Props {
   items: SwapiPerson[];
 }
 
-class CardList extends React.Component<Props> {
-  render() {
-    return (
-      <div>
-        <p>НИЖНЯЯ ПАНЕЛЬ</p>
-        {this.props.items.map((person) => (
-          <Card key={person.url} person={person} />
-        ))}
-      </div>
-    );
-  }
-}
+const CardList = ({ items }: Props) => {
+  return (
+    <div>
+      <p>НИЖНЯЯ ПАНЕЛЬ</p>
+      {items.map((person) => (
+        <Card key={person.url} person={person} />
+      ))}
+    </div>
+  );
+};
 
 export default CardList;

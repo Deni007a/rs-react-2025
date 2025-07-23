@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
 import Loader from './components/Loader';
@@ -8,98 +8,110 @@ import BuggyComponent from './components/BuggyComponent';
 import type { SwapiPerson } from './types/swapi';
 import { fetchSwapiPeople } from './utils/api';
 
-interface State {
-  items: SwapiPerson[];
-  searchTerm: string; // состояние для хранения поискового запроса
-  loading: boolean; // состояние для индикатора загрузки
-  error: string; // состояние для ошибки
-  showBug: boolean; // состояние для компонента BuggyComponent
-}
+const App = () => {
+  //  Состояние списка результатов
+  const [items, setItems] = useState<SwapiPerson[]>([]);
 
-class App extends React.Component<Record<string, never>, State> {
-  constructor(props: Record<string, never>) {
-    super(props);
-    const savedTerm = localStorage.getItem('searchTerm') || '';
-    this.state = {
-      items: [],
-      searchTerm: savedTerm,
-      loading: false,
-      error: '',
-      showBug: false,
-    };
-  }
+  // Получаем сохранённый поисковый запрос из localStorage при первой загрузке
+  const [searchTerm, setSearchTerm] = useState(
+    () => localStorage.getItem('searchTerm') || ''
+  );
 
-  componentDidMount() {
-    this.fetchData(this.state.searchTerm); //Загрузка при монтировании
-  }
+  // Флаг загрузки для отображения <Loader />
+  const [loading, setLoading] = useState(false);
 
-  async fetchData(term: string) {
-    this.setState({ loading: true, error: '', items: [] }); // Сброс состояний
+  //  Храним текст ошибки (если запрос упал)
+  const [error, setError] = useState('');
+
+  //  Флаг для отображения компонента, вызывающего ошибку
+  const [showBug, setShowBug] = useState(false);
+
+  // Автоматически запускаем загрузку данных при монтировании
+  useEffect(() => {
+    fetchData(searchTerm);
+  }, []);
+
+  /**
+   * Асинхронная загрузка данных по имени персонажа
+   * @param term - поисковый запрос
+   */
+  const fetchData = async (term: string) => {
+    setLoading(true);
+    setError('');
+    setItems([]); // очищаем список перед новым запросом
+
     try {
       const data = await fetchSwapiPeople(term);
-      this.setState({ items: data.results, loading: false });
+      setItems(data.results); // сохраняем полученные результаты
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
-      this.setState({ error: message, loading: false });
+      setError(message); // сохраняем текст ошибки
+    } finally {
+      setLoading(false); // выключаем индикатор загрузки
     }
-  }
-
-  /**
-   * Обработчик изменения поискового запроса
-   * @param term
-   */
-  handleSearch = (term: string) => {
-    localStorage.setItem('searchTerm', term);
-    this.setState({ searchTerm: term });
-    this.fetchData(term);
-  };
-  /**
-   * Функция, вызываемая при нажатии кнопки "Render BuggyComponent"
-   */
-  triggerBug = () => {
-    this.setState({ showBug: true });
   };
 
-  render() {
-    const { searchTerm, items, loading, error, showBug } = this.state;
+  /**
+   *  Обработчик поискового запроса — сохраняем в localStorage и запускаем fetch
+   * @param term - строка поиска
+   */
+  const handleSearch = (term: string) => {
+    localStorage.setItem('searchTerm', term); // сохраняем запрос
+    setSearchTerm(term);
+    fetchData(term);
+  };
 
-    return (
-      <ErrorBoundary
-        fallback={
-          <div
-            style={{
-              padding: '1rem',
-              color: 'red',
-              textAlign: 'center',
-              border: '1px solid green',
-              margin: '1rem',
-            }}
-          >
-            <h2>Ошибка приложения</h2>
-            <p>Компонент дал сбой. Попробуйте перезапустить приложение.</p>
-          </div>
-        }
-      >
-        <div className="app-container">
-          <h1>SWAPI Поиск</h1>
+  /**
+   *  Активируем отображение компонента, который бросает ошибку
+   */
+  const triggerBug = () => {
+    setShowBug(true);
+  };
 
-          <header className="search-section">
-            <SearchBar onSearch={this.handleSearch} initialValue={searchTerm} />
-          </header>
-
-          <main className="results-section">
-            {loading && <Loader />}
-            {error && <div style={{ color: 'red' }}>{error}</div>}
-            {!loading && !error && <CardList items={items} />}
-
-            <button onClick={this.triggerBug}>Render BuggyComponent</button>
-
-            {showBug && <BuggyComponent />}
-          </main>
+  return (
+    <ErrorBoundary
+      fallback={
+        <div
+          style={{
+            padding: '1rem',
+            color: 'red',
+            textAlign: 'center',
+            border: '1px solid green',
+            margin: '1rem',
+          }}
+        >
+          <h2>Ошибка приложения</h2>
+          <p>Компонент дал сбой. Попробуйте перезапустить приложение.</p>
         </div>
-      </ErrorBoundary>
-    );
-  }
-}
+      }
+    >
+      <div className="app-container">
+        <h1>SWAPI Поиск</h1>
+
+        <header className="search-section">
+          {/*  Компонент ввода поискового запроса */}
+          <SearchBar onSearch={handleSearch} initialValue={searchTerm} />
+        </header>
+
+        <main className="results-section">
+          {/*  Показываем лоадер во время загрузки */}
+          {loading && <Loader />}
+
+          {/*  Показываем текст ошибки */}
+          {error && <div style={{ color: 'red' }}>{error}</div>}
+
+          {/*  Показываем список карточек, если всё успешно */}
+          {!loading && !error && <CardList items={items} />}
+
+          {/*  Кнопка для вызова компонента с ошибкой */}
+          <button onClick={triggerBug}>Render BuggyComponent</button>
+
+          {/*  Потенциально сбойный компонент */}
+          {showBug && <BuggyComponent />}
+        </main>
+      </div>
+    </ErrorBoundary>
+  );
+};
 
 export default App;
