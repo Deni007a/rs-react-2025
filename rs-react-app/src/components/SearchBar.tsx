@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface Props {
   onSearch: (term: string) => void;
@@ -19,13 +20,29 @@ function SearchBar({ onSearch, initialValue = '' }: Props) {
   };
 
   return (
-    <div>
-      <input
-        value={input}
-        onChange={handleChange}
-        placeholder="Введите имя персонажа"
-      />
-      <button onClick={handleSubmit}>Search</button>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center', // центрирует вертикально
+        padding: '8px 16px',
+      }}
+    >
+      {/* Блок поиска */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input
+          value={input}
+          onChange={handleChange}
+          placeholder="Введите имя персонажа"
+        />
+        <button onClick={handleSubmit}>Search</button>
+      </div>
+
+      {/* Блок навигации */}
+      <nav className="link-active">
+        <Link to="/">Главная</Link>
+        <Link to="/about">О сайте</Link>
+      </nav>
     </div>
   );
 }
