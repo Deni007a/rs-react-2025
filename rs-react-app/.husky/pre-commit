@@ -1,13 +1,11 @@
-# npm run lint
-
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
 # Автоформатирование перед коммитом
-npm run format
+npm run format &&
 
 # Проверка кода линтером
-npm run lint
+npm run lint &&
 
 # Запуск тестов
 npm test
