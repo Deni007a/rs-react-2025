@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 interface Props {
   onSearch: (term: string) => void;
@@ -23,9 +22,7 @@ function SearchBar({ onSearch, initialValue = '' }: Props) {
     <div
       style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center', // центрирует вертикально
-        padding: '8px 16px',
+        justifyContent: 'center',
       }}
     >
       {/* Блок поиска */}
@@ -37,12 +34,6 @@ function SearchBar({ onSearch, initialValue = '' }: Props) {
         />
         <button onClick={handleSubmit}>Search</button>
       </div>
-
-      {/* Блок навигации */}
-      <nav className="link-active">
-        <Link to="/">Главная</Link>
-        <Link to="/about">О сайте</Link>
-      </nav>
     </div>
   );
 }

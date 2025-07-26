@@ -8,6 +8,7 @@ import BuggyComponent from './components/BuggyComponent';
 
 import type { SwapiPerson } from './types/swapi';
 import { fetchSwapiPeople } from './utils/api';
+import { Navigation } from './components/Navigation';
 
 const App = () => {
   //  Состояние списка результатов
@@ -87,6 +88,7 @@ const App = () => {
         <header className="search-section">
           {/* Компонент ввода поискового запроса */}
           <SearchBar onSearch={handleSearch} initialValue={searchTerm} />
+          <Navigation />
         </header>
 
         <main className="results-section">

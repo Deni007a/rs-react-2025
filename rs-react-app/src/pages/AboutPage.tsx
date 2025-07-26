@@ -1,5 +1,8 @@
+import { Navigation } from '../components/Navigation';
+
 const AboutPage = () => (
   <div style={{ padding: '2rem' }}>
+    <Navigation />
     <h2>О приложении</h2>
     <p>Автор: Денис</p>
     <a

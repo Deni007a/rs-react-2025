@@ -8,10 +8,11 @@ body {
 .app-container {
   max-width: 800px;
   margin: 2rem auto;
-  padding: 1rem;
+  padding: 2rem;
   background: #1a1a1a;
   border-radius: 8px;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+  font-family: sans-serif;
 }
 
 h1 {
@@ -20,15 +21,16 @@ h1 {
   margin-bottom: 2rem;
 }
 
-/* SearchBar */
+/* Form Elements */
 input {
   padding: 0.5rem 1rem;
-  border: none;
+  border: 1px solid #333;
   border-radius: 4px;
   margin-right: 0.5rem;
   width: 60%;
   background: #333;
   color: #fff;
+  font-size: 1rem;
 }
 
 button {
@@ -39,23 +41,32 @@ button {
   border-radius: 4px;
   font-weight: bold;
   cursor: pointer;
+  margin-left: 1rem;
 }
 
 button:hover {
   background: #ffd000;
 }
 
-/*bottom panel*/
-.bottom-panel {
+/* Layout Components */
+.search-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bottom-panel,
+.results-section {
   margin-top: 2rem;
   padding: 1rem;
   background: #1a1a1a;
   border-radius: 8px;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
-  border: 1px solid red;
+  border: 1px solid #ff4444;
 }
 
-/* CardList */
+/* Card Components */
 .card-list {
   display: flex;
   flex-direction: column;
@@ -63,7 +74,6 @@ button:hover {
   margin-top: 1rem;
 }
 
-/* Card */
 .card {
   background: #222;
   border: 1px solid #333;
@@ -80,7 +90,7 @@ button:hover {
   margin: 0.25rem 0;
 }
 
-/* лоадер с анимацией */
+/* Loader */
 .loader {
   margin: 2rem auto;
   width: 48px;
@@ -97,58 +107,20 @@ button:hover {
   }
 }
 
-.app-container {
-  font-family: sans-serif;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
+/* Navigation Links */
+.link {
+  padding: 8px 12px;
+  text-decoration: none;
+  color: #f0f0f0;
 }
 
-.search-section {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.results-section {
-  padding: 1rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin-top: 1rem;
-  border: 1px solid red;
-}
-
-input {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-button {
-  margin-left: 1rem;
-  padding: 0.5rem 1rem;
+.link-active,
+.link.active {
+  color: #2196f3;
   font-weight: bold;
-  background-color: #007acc;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-}
-
-/*button:hover {*/
-/*  background-color: #005ea2;*/
-/*}*/
-
-.link-active {
   border: 1px solid #2196f3;
   padding: 4px 8px;
   border-radius: 4px;
-  color: #2196f3;
-  display: flex;
+  display: inline-flex;
   gap: 16px;
-}
-.link-active a {
-  text-decoration: none;
-  color: #2196f3;
 }
