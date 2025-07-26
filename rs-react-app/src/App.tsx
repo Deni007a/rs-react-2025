@@ -7,77 +7,73 @@ import ErrorBoundary from './components/ErrorBoundary';
 import BuggyComponent from './components/BuggyComponent';
 import Pagination from './components/Pagination';
 import { Navigation } from './components/Navigation';
+import DetailsPanel from './components/DetailsPanel';
 
 import type { SwapiPerson } from './types/swapi';
 import { fetchSwapiPeople } from './utils/api';
+import { extractId } from './utils/swapi_id'; // извлечение ID из URL
 
 const App = () => {
-  // Список полученных персонажей
-  const [items, setItems] = useState<SwapiPerson[]>([]);
+  const [items, setItems] = useState<SwapiPerson[]>([]); // список персонажей
+  const [currentPage, setCurrentPage] = useState(1); // текущая страница пагинации
+  const [totalPages, setTotalPages] = useState(1); // общее количество страниц
+  const [totalItems, setTotalItems] = useState(0); // всего найдено
+  const [searchTerm, setSearchTerm] = useLocalStorage('searchTerm', ''); // поиск с сохранением в localStorage
+  const [loading, setLoading] = useState(false); // индикатор загрузки
+  const [error, setError] = useState(''); // сообщение об ошибке
+  const [showBug, setShowBug] = useState(false); // включает глючный компонент
+  const [selectedId, setSelectedId] = useState<string | null>(null); // выбранный персонаж
 
-  // Пагинация: текущая страница, всего страниц, всего результатов
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-
-  // Поисковый запрос сохраняется в localStorage
-  const [searchTerm, setSearchTerm] = useLocalStorage('searchTerm', '');
-
-  // Состояние загрузки
-  const [loading, setLoading] = useState(false);
-
-  // Ошибка, если запрос не удался
-  const [error, setError] = useState('');
-
-  //  Управление отображением багового компонента
-  const [showBug, setShowBug] = useState(false);
-
-  /**
-   * useEffect: вызывается при каждом изменении searchTerm или currentPage
-   * Загружает данные из SWAPI и обновляет состояние
-   */
+  // Загрузка данных при изменении поискового запроса или страницы
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true); // Показываем лоадер
-      setError(''); // Сброс текста ошибки
-      setItems([]); // Сброс предыдущих результатов
+      setLoading(true);
+      setError('');
+      setItems([]); // очищаем при новом поиске
 
       try {
         const data = await fetchSwapiPeople({ searchTerm, page: currentPage });
-        setItems(data.results); // Обновляем список персонажей
-        setTotalItems(data.count); // Кол-во всего найденных
-        setTotalPages(Math.ceil(data.count / 10) || 1); // Кол-во страниц (SWAPI отдаёт по 10)
+        setItems(data.results); // сохраняем список
+        setTotalItems(data.count); // всего найдено
+        setTotalPages(Math.ceil(data.count / 10) || 1); // расчёт страниц
       } catch (err: unknown) {
-        // Перехватываем ошибку и выводим сообщение
         const msg = err instanceof Error ? err.message : 'Неизвестная ошибка';
         setError(msg);
       } finally {
-        setLoading(false); // тключаем лоадер
+        setLoading(false);
       }
     };
-    fetchData(); // Запуск функции при любом изменении searchTerm / currentPage
+
+    fetchData(); // вызов на старте и при изменениях
   }, [searchTerm, currentPage]);
 
-  /**
-   * Обработка нового поискового запроса от компонента SearchBar
-   */
+  //  При вводе нового поиска
   const handleSearch = (term: string) => {
-    setCurrentPage(1); // Сброс страницы на первую
-    setSearchTerm(term); // Сохраняем запрос (в localStorage через хук)
+    setCurrentPage(1); // сброс на первую страницу
+    setSearchTerm(term); // обновить поиск
   };
 
-  /**
-   * Обработка смены страницы от компонента Pagination
-   */
+  //  Смена страницы
   const handlePageChange = (page: number) => {
-    setCurrentPage(page); // Устанавливаем новую страницу
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Прокрутка вверх
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // плавный скролл вверх
   };
 
-  //Включаем баговый компонент вручную
+  //  Выбор персонажа (для DetailsPanel)
+  const handleCardClick = (id: string) => {
+    setSelectedId(id);
+  };
+
+  //  Включить баг для тестирования ErrorBoundary
   const triggerBug = () => setShowBug(true);
 
+  //  Найти выбранного персонажа по ID
+  const selectedPerson = selectedId
+    ? items.find((p) => extractId(p.url) === selectedId)
+    : null;
+
   return (
+    //  Обёртка, защищающая от падения компонентов
     <ErrorBoundary
       fallback={
         <div
@@ -94,51 +90,53 @@ const App = () => {
         </div>
       }
     >
-      <div className="app-container">
+      <div className="app-container" style={{ padding: '1rem' }}>
         <h1>SWAPI Поиск</h1>
 
-        <header className="search-section">
-          {/* поиск + навигация */}
+        {/*  Поиск + Навигация */}
+        <header className="search-section" style={{ marginBottom: '1rem' }}>
           <SearchBar onSearch={handleSearch} initialValue={searchTerm} />
           <Navigation />
         </header>
 
-        <main className="results-section">
-          {/* Лоадер */}
-          {loading && <Loader />}
+        {/*  Основная зона: список + панель деталей */}
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          {/*  Левая часть: результаты */}
+          <main className="results-section">
+            {loading && <Loader />} {/* если идёт загрузка */}
+            {/* если ошибка */}
+            {error && <div style={{ color: 'red' }}>{error}</div>}
+            {/*  Результаты */}
+            {!loading && !error && (
+              <>
+                <CardList items={items} onCardClick={handleCardClick} />
 
-          {/* Ошибка запроса */}
-          {error && <div style={{ color: 'red' }}>{error}</div>}
+                {totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                )}
 
-          {/* Осное */}
-          {!loading && !error && (
-            <>
-              <CardList items={items} /> {/* 📋 Список персонажей */}
-              {totalPages > 1 && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              )}
-              <div
-                style={{
-                  textAlign: 'center',
-                  marginTop: '1rem',
-                  color: '#666',
-                }}
-              >
-                Найдено персонажей: {totalItems}
-              </div>
-            </>
+                <div className="cards_found">
+                  Найдено персонажей: {totalItems}
+                </div>
+              </>
+            )}
+            {/*  Тестовая ошибка */}
+            <button onClick={triggerBug}>Render BuggyComponent</button>
+            {showBug && <BuggyComponent />}
+          </main>
+
+          {/*  Правая часть: панель деталей персонажа */}
+          {selectedPerson && (
+            <DetailsPanel
+              person={selectedPerson}
+              onClose={() => setSelectedId(null)}
+            />
           )}
-
-          {/* Кнопка для отображения компонента с ошибкой */}
-          <button onClick={triggerBug}>Render BuggyComponent</button>
-
-          {/* Отображаем ошибочный компонент */}
-          {showBug && <BuggyComponent />}
-        </main>
+        </div>
       </div>
     </ErrorBoundary>
   );

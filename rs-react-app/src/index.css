@@ -58,6 +58,7 @@ button:hover {
 
 .bottom-panel,
 .results-section {
+  flex: 1;
   margin-top: 2rem;
   padding: 1rem;
   background: #1a1a1a;
@@ -123,4 +124,19 @@ button:hover {
   border-radius: 4px;
   display: inline-flex;
   gap: 16px;
+}
+.cards_found {
+  text-align: center;
+  margin-top: 1rem;
+  color: #666;
+}
+
+.details-panel {
+  border: 2px solid red;
+  margin-top: 2rem;
+}
+
+.content-wrapper {
+  display: flex;
+  gap: 1rem;
 }
