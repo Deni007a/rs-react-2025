@@ -1,69 +1,81 @@
 import { useEffect, useState } from 'react';
-import { useLocalStorage } from './hooks/useLocalStorage'; // новый хук
+import { useLocalStorage } from './hooks/useLocalStorage';
 import SearchBar from './components/SearchBar';
 import CardList from './components/CardList';
 import Loader from './components/Loader';
 import ErrorBoundary from './components/ErrorBoundary';
 import BuggyComponent from './components/BuggyComponent';
+import Pagination from './components/Pagination';
+import { Navigation } from './components/Navigation';
 
 import type { SwapiPerson } from './types/swapi';
 import { fetchSwapiPeople } from './utils/api';
-import { Navigation } from './components/Navigation';
 
 const App = () => {
-  //  Состояние списка результатов
+  // Список полученных персонажей
   const [items, setItems] = useState<SwapiPerson[]>([]);
 
-  //  Используем хук для работы с localStorage
+  // Пагинация: текущая страница, всего страниц, всего результатов
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  // Поисковый запрос сохраняется в localStorage
   const [searchTerm, setSearchTerm] = useLocalStorage('searchTerm', '');
 
-  // Флаг загрузки для отображения <Loader />
+  // Состояние загрузки
   const [loading, setLoading] = useState(false);
 
-  // Храним текст ошибки (если запрос упал)
+  // Ошибка, если запрос не удался
   const [error, setError] = useState('');
 
-  // Флаг для отображения компонента, вызывающего ошибку
+  //  Управление отображением багового компонента
   const [showBug, setShowBug] = useState(false);
 
-  // Загрузка данных при монтировании
-  useEffect(() => {
-    fetchData(searchTerm);
-  }, [searchTerm]);
-
   /**
-   * Асинхронная загрузка данных по имени персонажа
+   * useEffect: вызывается при каждом изменении searchTerm или currentPage
+   * Загружает данные из SWAPI и обновляет состояние
    */
-  const fetchData = async (term: string) => {
-    setLoading(true);
-    setError('');
-    setItems([]); // очищаем список перед новым запросом
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true); // Показываем лоадер
+      setError(''); // Сброс текста ошибки
+      setItems([]); // Сброс предыдущих результатов
 
-    try {
-      const data = await fetchSwapiPeople(term);
-      setItems(data.results); // сохраняем полученные результаты
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
-      setError(message); // сохраняем текст ошибки
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const data = await fetchSwapiPeople({ searchTerm, page: currentPage });
+        setItems(data.results); // Обновляем список персонажей
+        setTotalItems(data.count); // Кол-во всего найденных
+        setTotalPages(Math.ceil(data.count / 10) || 1); // Кол-во страниц (SWAPI отдаёт по 10)
+      } catch (err: unknown) {
+        // Перехватываем ошибку и выводим сообщение
+        const msg = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        setError(msg);
+      } finally {
+        setLoading(false); // тключаем лоадер
+      }
+    };
+    fetchData(); // Запуск функции при любом изменении searchTerm / currentPage
+  }, [searchTerm, currentPage]);
 
   /**
-   * Обработчик поискового запроса
+   * Обработка нового поискового запроса от компонента SearchBar
    */
   const handleSearch = (term: string) => {
-    setSearchTerm(term); //  сохраняется в localStorage через хук
-    fetchData(term);
+    setCurrentPage(1); // Сброс страницы на первую
+    setSearchTerm(term); // Сохраняем запрос (в localStorage через хук)
   };
 
   /**
-   * Активация компонента, вызывающего ошибку
+   * Обработка смены страницы от компонента Pagination
    */
-  const triggerBug = () => {
-    setShowBug(true);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page); // Устанавливаем новую страницу
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Прокрутка вверх
   };
+
+  //Включаем баговый компонент вручную
+  const triggerBug = () => setShowBug(true);
 
   return (
     <ErrorBoundary
@@ -86,25 +98,45 @@ const App = () => {
         <h1>SWAPI Поиск</h1>
 
         <header className="search-section">
-          {/* Компонент ввода поискового запроса */}
+          {/* поиск + навигация */}
           <SearchBar onSearch={handleSearch} initialValue={searchTerm} />
           <Navigation />
         </header>
 
         <main className="results-section">
-          {/* Показываем лоадер во время загрузки */}
+          {/* Лоадер */}
           {loading && <Loader />}
 
-          {/* Показываем текст ошибки */}
+          {/* Ошибка запроса */}
           {error && <div style={{ color: 'red' }}>{error}</div>}
 
-          {/* Список карточек, если всё успешно */}
-          {!loading && !error && <CardList items={items} />}
+          {/* Осное */}
+          {!loading && !error && (
+            <>
+              <CardList items={items} /> {/* 📋 Список персонажей */}
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
+              <div
+                style={{
+                  textAlign: 'center',
+                  marginTop: '1rem',
+                  color: '#666',
+                }}
+              >
+                Найдено персонажей: {totalItems}
+              </div>
+            </>
+          )}
 
-          {/* Кнопка для вызова компонента с ошибкой */}
+          {/* Кнопка для отображения компонента с ошибкой */}
           <button onClick={triggerBug}>Render BuggyComponent</button>
 
-          {/* Потенциально сбойный компонент */}
+          {/* Отображаем ошибочный компонент */}
           {showBug && <BuggyComponent />}
         </main>
       </div>
