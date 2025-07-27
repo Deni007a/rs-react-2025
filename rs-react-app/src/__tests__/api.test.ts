@@ -2,35 +2,53 @@ import { fetchSwapiPeople } from '../utils/api';
 
 describe('fetchSwapiPeople', () => {
   beforeEach(() => {
-    jest.resetAllMocks(); // очищаем моки перед каждым тестом
+    jest.resetAllMocks();
+    global.fetch = jest.fn();
   });
 
-  test('возвращает данные при успешном запросе', async () => {
-    // Мокаем fetch, чтобы он вернул успешный ответ
-    global.fetch = jest.fn().mockResolvedValue({
+  test('успешный ответ возвращает данные', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ count: 1, results: [{ name: 'Luke' }] }),
+      json: async () => ({
+        count: 1,
+        results: [
+          { name: 'Luke Skywalker', url: 'https://swapi.dev/api/people/1/' },
+        ],
+      }),
     });
-    const result = await fetchSwapiPeople('Luke');
 
-    // Проверяем, что fetch был вызван с нужным URL
-    expect(global.fetch).toHaveBeenCalledWith('/api/people/?search=Luke');
-
-    // Проверяем, что результат содержит имя
-    expect(result.results[0].name).toBe('Luke');
+    const result = await fetchSwapiPeople({ searchTerm: 'Luke', page: 1 });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('search=Luke')
+    );
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0].name).toBe('Luke Skywalker');
   });
 
-  test('выбрасывает ошибку при плохом ответе', async () => {
-    // Мокаем fetch с ошибкой
-    global.fetch = jest.fn().mockResolvedValue({
+  test('ошибка при плохом ответе', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
-      status: 404,
-      statusText: 'Not Found',
+      status: 500,
+      statusText: 'Internal Server Error',
     });
 
-    // Проверяем, что функция выбрасывает исключение
-    await expect(fetchSwapiPeople('Vader')).rejects.toThrow(
-      'Ошибка 404: Not Found'
+    await expect(
+      fetchSwapiPeople({ searchTerm: 'Vader', page: 2 })
+    ).rejects.toThrow('Ошибка 500: Internal Server Error');
+  });
+
+  test('пустой searchTerm и страница передаются', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        count: 0,
+        results: [],
+      }),
+    });
+
+    await fetchSwapiPeople({ searchTerm: '', page: 3 });
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('page=3')
     );
   });
 });
