@@ -16,7 +16,7 @@ const Card = ({ person, onClick }: Props) => {
   const id = extractId(url);
 
   const handleClick = () => {
-    onClick?.(id); // 🔹 сообщаем ID вверх
+    onClick?.(id); //  сообщаем ID вверх
   };
 
   return (
