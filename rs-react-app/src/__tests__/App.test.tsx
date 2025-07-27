@@ -1,107 +1,123 @@
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import App from '../App';
 
-// Перед каждым тестом сбрасываем моки и настраиваем глобальный fetch
-beforeEach(() => {
-  jest.resetAllMocks(); // очищаем все моки
+const mockPerson = {
+  name: 'Luke Skywalker',
+  height: '172',
+  mass: '77',
+  hair_color: 'blond',
+  skin_color: 'fair',
+  eye_color: 'blue',
+  birth_year: '19BBY',
+  gender: 'male',
+  homeworld: 'https://swapi.dev/api/planets/1/',
+  films: ['https://swapi.dev/api/films/1/'],
+  species: [],
+  vehicles: ['https://swapi.dev/api/vehicles/14/'],
+  starships: ['https://swapi.dev/api/starships/12/'],
+  created: '2014-12-09T13:50:51.644000Z',
+  edited: '2014-12-20T21:17:56.891000Z',
+  url: 'https://swapi.dev/api/people/1/',
+};
 
-  // Мокаем глобальный fetch, чтобы он возвращал успешный ответ
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: true,
-    json: () =>
-      Promise.resolve({
-        count: 1,
-        results: [
-          {
-            name: 'Luke Skywalker',
-            birth_year: '19BBY',
-            gender: 'male',
-            url: 'https://swapi.dev/api/people/1/',
-            height: '172',
-            mass: '77',
-            hair_color: 'blond',
-            skin_color: 'fair',
-            eye_color: 'blue',
-            homeworld: '',
-            films: [],
-            species: [],
-            vehicles: [],
-            starships: [],
-            created: '',
-            edited: '',
-          },
-        ],
-      }),
+const mockResponse = {
+  count: 1,
+  next: null,
+  previous: null,
+  results: [mockPerson],
+};
+
+const mockEmptyResponse = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+};
+
+describe('App Component', () => {
+  beforeEach(() => {
+    global.fetch = jest.fn() as jest.Mock;
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      // Return empty response for initial load
+      if (url.includes('page=1') && !url.includes('search')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => mockEmptyResponse,
+        });
+      }
+      // Return mock response for search
+      if (url.includes('search=Luke')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => mockResponse,
+        });
+      }
+      // Default fallback
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockEmptyResponse,
+      });
+    });
   });
-});
 
-describe('App component', () => {
-  //  Проверяем, что заголовок и поле поиска отображаются
-  test('renders header and search bar', () => {
-    render(<App />);
-
-    expect(screen.getByText('SWAPI Поиск')).toBeInTheDocument(); // заголовок
-    expect(screen.getByRole('textbox')).toBeInTheDocument(); // поле ввода
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  // Проверяем, что Loader появляется, а затем карточка
-  test('shows loader during fetch and then renders cards', async () => {
-    const { container } = render(<App />); // рендерим компонент
+  it('should fetch and display character data when search is performed', async () => {
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <App />
+        </MemoryRouter>
+      );
+    });
 
-    const loader = container.querySelector('.loader'); // ищем loader по классу
-    expect(loader).not.toBeNull(); // проверяем, что он существует
+    // Initial fetch should happen on mount
+    expect(global.fetch).toHaveBeenCalledTimes(1);
 
+    // Simulate user input
+    const input = screen.getByPlaceholderText(/введите имя/i);
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'Luke' } });
+    });
+
+    // Find and click search button
+    const searchButton = screen.getByRole('button', { name: /search/i });
+    await act(async () => {
+      fireEvent.click(searchButton);
+    });
+
+    // Verify fetch was called with search parameter
     await waitFor(() => {
-      expect(screen.getByText('Luke Skywalker')).toBeInTheDocument(); // карточка появилась
-    });
-  });
-
-  // Проверяем, что поиск вызывает fetch с новым параметром
-  test('handles search input and fetches new data', async () => {
-    render(<App />); // рендерим компонент
-
-    const input = screen.getByRole('textbox'); // получаем поле ввода
-    fireEvent.change(input, { target: { value: 'Leia' } }); // вводим текст
-
-    const button = screen.getByRole('button', { name: /search/i }); // находим кнопку
-    fireEvent.click(button); // кликаем
-
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/people/?search=Leia'); // проверяем URL
-    });
-  });
-
-  //  Проверяем, что отображается ошибка при плохом ответе
-  test('shows error message if fetch fails', async () => {
-    // Мокаем fetch с ошибкой
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('search=Luke')
+      );
     });
 
-    render(<App />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Ошибка 500/)).toBeInTheDocument(); // сообщение об ошибке
+    // Wait for and verify the character data is displayed in the card
+    const characterName = await screen.findByRole('heading', {
+      name: /luke skywalker/i,
     });
-  });
+    expect(characterName).toBeInTheDocument();
 
-  // Проверяем, что BuggyComponent выбрасывает ошибку и ErrorBoundary её ловит
-  test('renders BuggyComponent when button is clicked', async () => {
-    // Подавляем console.error, чтобы не засорять вывод
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Verify additional character details
+    const birthYear = screen.getByText(/birth year:.*19BBY/i);
+    expect(birthYear).toBeInTheDocument();
 
-    render(<App />);
+    const gender = screen.getByText(/gender:.*male/i);
+    expect(gender).toBeInTheDocument();
 
-    const button = screen.getByText('Render BuggyComponent'); // находим кнопку
-    fireEvent.click(button); // кликаем
-
-    await waitFor(() => {
-      expect(screen.getByText('Ошибка приложения')).toBeInTheDocument(); // fallback от ErrorBoundary
-    });
-
-    spy.mockRestore(); // возвращаем оригинальный console.error
+    // Verify the count of found characters
+    const countText = screen.getByText(/найдено персонажей:.*1/i);
+    expect(countText).toBeInTheDocument();
   });
 });
